@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from langfuse import Langfuse, get_client
+from langfuse import Langfuse, get_client, observe
 
 import os
 load_dotenv()
@@ -264,4 +264,90 @@ print("Prompt 2",prompt_v4.prompt)
 #-------------------------------------
 
 
+
+#-------------------------------------
+#TRACING: Observability and Monitoring
+#-------------------------------------
+
+# Tracing tracks your function calls automatically
+# You don't need to use prompts - tracing works with ANY function!
+
+# Example 1: Simple traced function (no LLM, just tracking)
+@observe()
+def process_data(data):
+    """This function will be traced - inputs, outputs, execution time logged"""
+    result = data.upper()
+    return result
+
+# Example 2: Traced function using a prompt
+@observe()
+def analyze_text_with_prompt(text, analysis_type="sentiment"):
+    """Combines prompt management + tracing"""
+    # Fetch and compile prompt
+    prompt = langfuse.get_prompt("text-analyzer")
+    compiled = prompt.compile(analysis_type=analysis_type, text=text)
+    
+    # Simulate LLM call (replace with actual API call)
+    # response = openai.chat.completions.create(...)
+    response = f"Analyzed: {compiled}"
+    
+    return response
+
+# Example 3: Nested tracing (parent-child relationship)
+@observe()
+def extract_keywords(text):
+    """Child function - will be nested under parent trace"""
+    keywords = text.split()[:5]
+    return keywords
+
+@observe()
+def comprehensive_analysis(text):
+    """Parent function - creates trace hierarchy"""
+    # This call will be nested in the trace
+    keywords = extract_keywords(text)
+    
+    # Another nested call
+    sentiment = analyze_text_with_prompt(text, "sentiment")
+    
+    return {
+        "keywords": keywords,
+        "sentiment": sentiment
+    }
+
+# Example 4: Custom trace attributes and metadata
+@observe(name="custom-analyzer")
+def custom_traced_function(input_text):
+    """You can customize trace name and add metadata"""
+    return f"Processed: {input_text}"
+
+
+# Run the traced functions
+print("\n" + "="*50)
+print("TESTING TRACING FEATURES")
+print("="*50 + "\n")
+
+# Test simple tracing
+result1 = process_data("hello world")
+print(f"1. Simple trace result: {result1}")
+
+# Test prompt + tracing
+result2 = analyze_text_with_prompt("This product is great!", "sentiment")
+print(f"2. Prompt + trace result: {result2}")
+
+# Test nested tracing
+result3 = comprehensive_analysis("AI ML Python Data Science Technology")
+print(f"3. Nested trace result: {result3}")
+
+# Test custom attributes
+result4 = custom_traced_function("test input")
+print(f"4. Custom trace result: {result4}")
+
+print("\n" + "="*50)
+print("All traces sent to Langfuse dashboard!")
+print("="*50 + "\n")
+
+# IMPORTANT: Flush traces before script exits
+# This ensures all trace data is sent to Langfuse cloud
+langfuse.flush()
+print("Traces flushed successfully!")
 

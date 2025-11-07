@@ -1,0 +1,20 @@
+#Key value pair
+"apple" : "this is a red fruit"
+1 : "this is section 1"
+---
+#lists
+- apple
+- mango
+- banana
+---
+#block
+cities:
+  - Paris
+  - New York
+  - London
+  - Mumbai
+---
+
+#--- this indicates different documents in the same file
+#... three dots indicates the end of the YAML stream
+...
